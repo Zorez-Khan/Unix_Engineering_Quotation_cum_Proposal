@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unix Engineering — Quotation Cum Proposal</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&family=Bebas+Neue&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #0d1b2a;
+  --navy2: #162032;
+  --navy3: #1e2d40;
+  --gold: #c9963a;
+  --gold2: #e8b455;
+  --cream: #f7f3ec;
+  --white: #ffffff;
+  --text: #1a1a1a;
+  --muted: #6b7280;
+  --border: #ddd6c8;
+  --red: #b03a2e;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: #0d1520;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ══════════════════════════════
+   LOCK SCREEN
+══════════════════════════════ */
+#lock-screen {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at 60% 40%, #162032 0%, #080e18 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+#lock-screen.hide {
+  opacity: 0;
+  transform: scale(1.04);
+  pointer-events: none;
+}
+
+.lock-bg-lines {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  opacity: 0.06;
+}
+.lock-bg-lines::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 40px,
+    #c9963a 40px,
+    #c9963a 41px
+  );
+}
+
+.lock-card {
+  position: relative;
+  background: rgba(22,32,50,0.9);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(201,150,58,0.25);
+  border-top: 2px solid var(--gold);
+  padding: 52px 44px 44px;
+  width: 380px;
+  max-width: 92vw;
+  text-align: center;
+  animation: lockIn 0.7s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+@keyframes lockIn {
+  from { opacity:0; transform: translateY(30px) scale(0.95); }
+  to   { opacity:1; transform: translateY(0) scale(1); }
+}
+
+.lock-emblem {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold) 0%, #8a6020 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 22px;
+  font-size: 1.5rem;
+  box-shadow: 0 0 0 6px rgba(201,150,58,0.12), 0 0 0 12px rgba(201,150,58,0.05);
+  animation: pulse 2.5s infinite;
+}
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 6px rgba(201,150,58,0.12), 0 0 0 12px rgba(201,150,58,0.05); }
+  50% { box-shadow: 0 0 0 8px rgba(201,150,58,0.18), 0 0 0 18px rgba(201,150,58,0.06); }
+}
+
+.lock-brand {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.9rem;
+  letter-spacing: 4px;
+  color: var(--white);
+  margin-bottom: 4px;
+}
+.lock-sub {
+  font-size: 0.72rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+.lock-desc {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 32px;
+  font-weight: 300;
+}
+
+.lock-divider {
+  width: 40px;
+  height: 1px;
+  background: var(--gold);
+  margin: 0 auto 28px;
+  opacity: 0.5;
+}
+
+.lock-label {
+  font-size: 0.68rem;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  text-align: left;
+  margin-bottom: 8px;
+}
+#pw-input {
+  width: 100%;
+  padding: 14px 18px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(201,150,58,0.3);
+  border-radius: 2px;
+  color: var(--gold2);
+  font-family: 'Courier Prime', monospace;
+  font-size: 1.05rem;
+  letter-spacing: 4px;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.25s, background 0.25s;
+}
+#pw-input:focus {
+  border-color: var(--gold);
+  background: rgba(201,150,58,0.06);
+}
+#pw-input::placeholder { color: rgba(255,255,255,0.15); letter-spacing: 2px; }
+
+.unlock-btn {
+  margin-top: 14px;
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--gold) 0%, #a07828 100%);
+  color: var(--navy);
+  border: none;
+  border-radius: 2px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1rem;
+  letter-spacing: 3px;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+  position: relative;
+  overflow: hidden;
+}
+.unlock-btn::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  transform: skewX(-20deg);
+  transition: left 0.5s ease;
+}
+.unlock-btn:hover::after { left: 150%; }
+.unlock-btn:hover { opacity: 0.9; }
+.unlock-btn:active { transform: scale(0.98); }
+
+#lock-error {
+  min-height: 18px;
+  color: #e74c3c;
+  font-size: 0.78rem;
+  margin-top: 10px;
+  letter-spacing: 0.5px;
+}
+
+/* ══════════════════════════════
+   DOCUMENT WRAPPER
+══════════════════════════════ */
+#doc {
+  display: none;
+  width: 900px;
+  max-width: 98vw;
+  margin: 32px auto;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+#doc.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ══════════════════════════════
+   HERO HEADER
+══════════════════════════════ */
+.doc-hero {
+  background: var(--navy);
+  position: relative;
+  padding: 50px 56px 0;
+  overflow: hidden;
+}
+.hero-grid-lines {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(201,150,58,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(201,150,58,0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+.hero-glow {
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(201,150,58,0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero-top {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 40px;
+}
+
+.hero-brand {}
+.hero-tag {
+  font-size: 0.65rem;
+  letter-spacing: 3.5px;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 600;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.hero-tag::before {
+  content: '';
+  display: inline-block;
+  width: 20px;
+  height: 1px;
+  background: var(--gold);
+}
+.hero-company {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 3.4rem;
+  letter-spacing: 6px;
+  color: var(--white);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.hero-company span { color: var(--gold); }
+.hero-tagline {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.35);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.hero-meta {
+  text-align: right;
+  padding-top: 4px;
+}
+.doc-badge {
+  display: inline-block;
+  background: var(--gold);
+  color: var(--navy);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.85rem;
+  letter-spacing: 3px;
+  padding: 7px 16px;
+  margin-bottom: 14px;
+}
+.meta-item {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 4px;
+  text-align: right;
+}
+.meta-item strong { color: rgba(255,255,255,0.9); font-weight: 500; }
+
+/* Hero bottom bar */
+.hero-bottom {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  border-top: 1px solid rgba(201,150,58,0.2);
+}
+.hero-pill {
+  padding: 16px 0 16px;
+  flex: 1;
+  border-right: 1px solid rgba(201,150,58,0.1);
+  padding-right: 24px;
+  margin-right: 24px;
+}
+.hero-pill:last-child { border-right: none; margin-right: 0; }
+.pill-label {
+  font-size: 0.62rem;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+  margin-bottom: 5px;
+}
+.pill-value {
+  font-size: 0.88rem;
+  color: rgba(255,255,255,0.85);
+  font-weight: 500;
+}
+.pill-value.highlight { color: var(--gold2); }
+
+/* gold line under hero */
+.hero-stripe {
+  height: 3px;
+  background: linear-gradient(90deg, var(--gold) 0%, var(--gold2) 40%, transparent 100%);
+}
+
+/* ══════════════════════════════
+   DOCUMENT BODY
+══════════════════════════════ */
+.doc-body {
+  background: var(--cream);
+}
+
+/* ══════════════════════════════
+   TO / FROM BLOCK
+══════════════════════════════ */
+.addr-strip {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.addr-cell {
+  padding: 24px 36px;
+  position: relative;
+}
+.addr-cell + .addr-cell {
+  border-left: 1px solid var(--border);
+}
+.addr-pill-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.62rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.addr-pill-label::before {
+  content: '';
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--gold);
+}
+.addr-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 4px;
+}
+.addr-lines {
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+/* ══════════════════════════════
+   SITE STRIP
+══════════════════════════════ */
+.site-strip {
+  background: var(--navy2);
+  padding: 13px 36px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.site-tag {
+  font-size: 0.6rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.site-sep {
+  width: 1px;
+  height: 16px;
+  background: rgba(255,255,255,0.15);
+  flex-shrink: 0;
+}
+.site-name {
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.85);
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+/* ══════════════════════════════
+   SECTION WRAPPERS
+══════════════════════════════ */
+.section {
+  padding: 40px 44px;
+  border-bottom: 1px solid var(--border);
+  animation: fadeUp 0.5s ease both;
+}
+.section:last-child { border-bottom: none; }
+
+@keyframes fadeUp {
+  from { opacity:0; transform: translateY(16px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 28px;
+}
+.sec-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 3rem;
+  line-height: 1;
+  color: rgba(201,150,58,0.18);
+  letter-spacing: 2px;
+  flex-shrink: 0;
+  user-select: none;
+}
+.sec-title-block {}
+.sec-label {
+  font-size: 0.62rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+.sec-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: var(--navy);
+  letter-spacing: 0.3px;
+}
+
+/* ══════════════════════════════
+   INTRO SECTION
+══════════════════════════════ */
+.intro-text {
+  font-size: 0.9rem;
+  color: #444;
+  line-height: 1.85;
+  max-width: 700px;
+}
+.intro-text strong { color: var(--navy); }
+
+.value-strip {
+  margin-top: 22px;
+  background: var(--navy);
+  padding: 18px 22px;
+  border-left: 3px solid var(--gold);
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.vs-icon { font-size: 1.3rem; flex-shrink: 0; margin-top: 2px; }
+.vs-text {
+  font-size: 0.84rem;
+  color: rgba(255,255,255,0.75);
+  line-height: 1.75;
+}
+.vs-text strong { color: var(--gold2); }
+
+/* ══════════════════════════════
+   RATE SCHEDULE (§02)
+══════════════════════════════ */
+.rate-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  transition: box-shadow 0.25s;
+}
+.rate-card:hover { box-shadow: 0 6px 28px rgba(0,0,0,0.08); }
+
+.rc-head {
+  background: var(--navy3);
+  padding: 16px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.rc-head-title {
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--white);
+  letter-spacing: 0.3px;
+}
+.rc-badge {
+  background: var(--gold);
+  color: var(--navy);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+  padding: 4px 14px;
+  border-radius: 2px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.rc-body { padding: 18px 24px 14px; }
+.rc-desc {
+  font-size: 0.83rem;
+  color: var(--muted);
+  line-height: 1.7;
+  margin-bottom: 14px;
+}
+
+.rc-formula {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f0ede7;
+  border: 1px solid var(--border);
+  padding: 10px 16px;
+  margin-bottom: 12px;
+  border-left: 3px solid var(--navy);
+}
+.rf-label {
+  font-size: 0.65rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.rf-eq {
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.88rem;
+  color: var(--navy);
+  font-weight: 700;
+}
+
+.rc-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 10px;
+}
+.rc-tag {
+  font-size: 0.72rem;
+  padding: 4px 10px;
+  background: rgba(13,27,42,0.07);
+  color: var(--navy);
+  border-radius: 20px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+.bundle-note {
+  background: linear-gradient(135deg, #fffbf0, #fff8e6);
+  border: 1px solid #e8d47a;
+  border-left: 4px solid var(--gold);
+  padding: 16px 20px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-top: 4px;
+}
+.bn-icon { font-size: 1.2rem; flex-shrink: 0; }
+.bn-text { font-size: 0.83rem; color: #5a4a20; line-height: 1.75; }
+.bn-text strong { color: #3a2d08; }
+
+/* ══════════════════════════════
+   SCOPE OF WORK (§03)
+══════════════════════════════ */
+.scope-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.scope-item {
+  background: var(--white);
+  border: 1px solid var(--border);
+  padding: 14px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  transition: border-color 0.2s, transform 0.2s;
+  cursor: default;
+}
+.scope-item:hover {
+  border-color: var(--gold);
+  transform: translateX(3px);
+}
+.si-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--gold);
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+.si-text {
+  font-size: 0.85rem;
+  color: var(--text);
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+/* ══════════════════════════════
+   PAYMENT TERMS (§04)
+══════════════════════════════ */
+.pay-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.pay-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--gold);
+  padding: 18px 16px;
+  text-align: center;
+}
+.pc-icon { font-size: 1.6rem; margin-bottom: 8px; }
+.pc-label {
+  font-size: 0.65rem;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+.pc-value {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.pay-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+  margin-bottom: 18px;
+}
+.pay-table thead {
+  background: var(--navy);
+  color: white;
+}
+.pay-table thead th {
+  padding: 11px 16px;
+  font-size: 0.72rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-weight: 600;
+  text-align: left;
+}
+.pay-table tbody tr { border-bottom: 1px solid var(--border); }
+.pay-table tbody tr:nth-child(even) { background: #faf8f4; }
+.pay-table tbody tr:hover { background: #f5f1e8; }
+.pay-table td {
+  padding: 12px 16px;
+  color: var(--text);
+  vertical-align: middle;
+}
+.pay-table td:first-child {
+  color: var(--muted);
+  font-weight: 500;
+  width: 40%;
+}
+.pay-table td:last-child { font-weight: 600; color: var(--navy); }
+
+.pay-note {
+  background: var(--navy);
+  color: rgba(255,255,255,0.75);
+  padding: 16px 20px;
+  font-size: 0.82rem;
+  line-height: 1.8;
+  border-left: 3px solid var(--gold);
+}
+.pay-note strong { color: var(--gold2); }
+
+/* ══════════════════════════════
+   T&C (§05)
+══════════════════════════════ */
+.tc-list {}
+.tc-item {
+  display: flex;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px dashed var(--border);
+  align-items: flex-start;
+}
+.tc-item:last-child { border-bottom: none; }
+.tc-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1rem;
+  color: var(--gold);
+  letter-spacing: 1px;
+  width: 24px;
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+.tc-text { font-size: 0.85rem; color: #444; line-height: 1.75; }
+.tc-text strong { color: var(--navy); }
+
+.warn-box {
+  margin-top: 20px;
+  background: linear-gradient(135deg, #1c0a0a, #2a0e0e);
+  border: 1px solid rgba(176,58,46,0.4);
+  border-left: 4px solid var(--red);
+  padding: 16px 20px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.wb-icon { font-size: 1.3rem; flex-shrink: 0; }
+.wb-text { font-size: 0.83rem; color: rgba(255,255,255,0.7); line-height: 1.75; }
+.wb-text strong { color: #e88a7a; }
+
+/* ══════════════════════════════
+   FOOTER / SIGNATORY
+══════════════════════════════ */
+.doc-footer {
+  background: var(--navy);
+  padding: 38px 44px 36px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 28px;
+}
+.footer-left {}
+.footer-validity {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.35);
+  font-style: italic;
+  margin-bottom: 4px;
+}
+.footer-ref {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.35);
+}
+.footer-ref span { color: rgba(255,255,255,0.6); }
+
+.footer-right { text-align: right; }
+.digital-note {
+  font-size: 0.73rem;
+  color: rgba(255,255,255,0.35);
+  margin-bottom: 14px;
+  font-style: italic;
+  letter-spacing: 0.2px;
+}
+.digital-note em {
+  color: var(--gold);
+  font-style: normal;
+  font-weight: 600;
+}
+.sig-box {
+  border-top: 1px solid rgba(255,255,255,0.25);
+  padding-top: 12px;
+}
+.sig-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.2rem;
+  font-weight: 600;
+  font-style: italic;
+  color: var(--white);
+  margin-bottom: 2px;
+}
+.sig-title {
+  font-size: 0.7rem;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 600;
+}
+
+/* bottom accent */
+.doc-bottom-bar {
+  height: 4px;
+  background: linear-gradient(90deg, var(--gold) 0%, var(--gold2) 50%, transparent 100%);
+}
+
+/* ══════════════════════════════
+   INDEX / TABLE OF CONTENTS
+══════════════════════════════ */
+#sec-index {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 32px 44px;
+}
+.index-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+.index-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.85rem;
+  letter-spacing: 4px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.index-line {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.index-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.index-item {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  text-decoration: none;
+  background: #faf8f4;
+  border: 1px solid var(--border);
+  padding: 13px 16px;
+  transition: background 0.2s, border-color 0.2s, transform 0.18s;
+  position: relative;
+  overflow: hidden;
+}
+.index-item::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--gold);
+  transform: scaleY(0);
+  transition: transform 0.2s ease;
+  transform-origin: bottom;
+}
+.index-item:hover {
+  background: #fff;
+  border-color: var(--gold);
+  transform: translateX(4px);
+}
+.index-item:hover::before { transform: scaleY(1); }
+.idx-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.3rem;
+  color: rgba(201,150,58,0.3);
+  letter-spacing: 2px;
+  min-width: 38px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.idx-info {}
+.idx-label {
+  font-size: 0.6rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.idx-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--navy);
+  line-height: 1.3;
+}
+.idx-arrow {
+  margin-left: auto;
+  color: var(--gold);
+  font-size: 0.9rem;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  transform: translateX(-4px);
+}
+.index-item:hover .idx-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ── BACK TO INDEX BUTTON ── */
+.back-to-index {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--border);
+}
+.bti-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  text-decoration: none;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 7px 14px;
+  border: 1px solid var(--border);
+  background: var(--white);
+  transition: color 0.2s, border-color 0.2s, background 0.2s, transform 0.15s;
+}
+.bti-link:hover {
+  color: var(--navy);
+  border-color: var(--gold);
+  background: #fdf9f0;
+  transform: translateY(-2px);
+}
+.bti-arrow {
+  font-size: 0.85rem;
+  transition: transform 0.2s;
+}
+.bti-link:hover .bti-arrow { transform: translateY(-2px); }
+
+/* ══════════════════════════════
+   RESPONSIVE
+══════════════════════════════ */
+@media(max-width:680px){
+  .hero-top { flex-direction:column; gap:20px; }
+  .hero-meta { text-align:left; }
+  .doc-badge { display:block; text-align:center; }
+  .index-grid { grid-template-columns:1fr; }
+  #sec-index { padding:24px 20px; }
+  .addr-strip { grid-template-columns:1fr; }
+  .addr-cell+.addr-cell { border-left:none; border-top:1px solid var(--border); }
+  .scope-grid { grid-template-columns:1fr; }
+  .pay-grid { grid-template-columns:1fr 1fr; }
+  .section { padding:28px 20px; }
+  .doc-hero { padding:32px 20px 0; }
+  .hero-company { font-size:2.4rem; }
+  .hero-bottom { flex-wrap:wrap; gap:12px; }
+  .hero-pill { border-right:none; margin-right:0; padding-right:0; flex:0 0 48%; }
+  .doc-footer { flex-direction:column; align-items:flex-start; gap:24px; }
+  .footer-right { text-align:left; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══ LOCK SCREEN ══ -->
+<div id="lock-screen">
+  <div class="lock-bg-lines"></div>
+  <div class="lock-card">
+    <div class="lock-emblem">🔒</div>
+    <div class="lock-brand">Unix <span style="color:var(--gold)">Engg</span></div>
+    <div class="lock-sub">Confidential Document</div>
+    <div class="lock-divider"></div>
+    <div class="lock-desc">This proposal is accessible only to<br>authorised associates &amp; clients.</div>
+    <div class="lock-label">Enter Access Password</div>
+    <input type="password" id="pw-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')unlock()">
+    <button class="unlock-btn" onclick="unlock()">Unlock Document</button>
+    <div id="lock-error"></div>
+  </div>
+</div>
+
+<!-- ══ DOCUMENT ══ -->
+<div id="doc">
+
+  <!-- HERO HEADER -->
+  <div class="doc-hero">
+    <div class="hero-grid-lines"></div>
+    <div class="hero-glow"></div>
+    <div class="hero-top">
+      <div class="hero-brand">
+        <div class="hero-tag">Manpower &amp; Site Services</div>
+        <div class="hero-company">Unix <span>Engineering</span></div>
+        <div class="hero-tagline">Reliable · Accountable · On-Site</div>
+      </div>
+      <div class="hero-meta">
+        <div class="doc-badge">Quotation Cum Proposal</div>
+        <div class="meta-item">Date: <strong>3rd June 2026</strong></div>
+        <div class="meta-item">Validity: <strong>Till Next Revision</strong></div>
+        <div class="meta-item">Ref: <strong>UE/QP/2026/01</strong></div>
+      </div>
+    </div>
+    <div class="hero-bottom">
+      <div class="hero-pill">
+        <div class="pill-label">To</div>
+        <div class="pill-value">The Engineer, Modern Steel</div>
+      </div>
+      <div class="hero-pill">
+        <div class="pill-label">Location</div>
+        <div class="pill-value">Kamani Centre, Bistupur, Jamshedpur</div>
+      </div>
+      <div class="hero-pill">
+        <div class="pill-label">Settlement</div>
+        <div class="pill-value highlight">26 Working Days / Month</div>
+      </div>
+      <div class="hero-pill">
+        <div class="pill-label">Labour Payment</div>
+        <div class="pill-value highlight">Weekly Cycle</div>
+      </div>
+    </div>
+  </div>
+  <div class="hero-stripe"></div>
+
+  <div class="doc-body">
+
+    <!-- ADDRESSES -->
+    <div class="addr-strip">
+      <div class="addr-cell">
+        <div class="addr-pill-label">Addressed To</div>
+        <div class="addr-name">The Engineer</div>
+        <div class="addr-lines">Modern Steel<br>Kamani Centre, Bistupur<br>Jamshedpur, Jharkhand</div>
+      </div>
+      <div class="addr-cell">
+        <div class="addr-pill-label">Submitted By</div>
+        <div class="addr-name">Unix Engineering</div>
+        <div class="addr-lines">Jamshedpur, Jharkhand<br>&nbsp;<br>&nbsp;</div>
+      </div>
+    </div>
+
+    <!-- SITE STRIP -->
+    <div class="site-strip">
+      <span class="site-tag">Work Site</span>
+      <div class="site-sep"></div>
+      <span class="site-name">Tata Steel Utility Infrastructure Services Ltd (TSUISL) — Golmuri Town Management Depot</span>
+    </div>
+
+    <!-- INDEX -->
+    <div id="sec-index">
+      <div class="index-header">
+        <span class="index-title">Table of Contents</span>
+        <div class="index-line"></div>
+      </div>
+      <div class="index-grid">
+        <a class="index-item" href="#sec-01">
+          <span class="idx-num">01</span>
+          <div class="idx-info">
+            <div class="idx-label">Overview</div>
+            <div class="idx-name">Introduction &amp; Value Proposition</div>
+          </div>
+          <span class="idx-arrow">→</span>
+        </a>
+        <a class="index-item" href="#sec-02">
+          <span class="idx-num">02</span>
+          <div class="idx-info">
+            <div class="idx-label">Pricing</div>
+            <div class="idx-name">Rate Schedule</div>
+          </div>
+          <span class="idx-arrow">→</span>
+        </a>
+        <a class="index-item" href="#sec-03">
+          <span class="idx-num">03</span>
+          <div class="idx-info">
+            <div class="idx-label">Deliverables</div>
+            <div class="idx-name">Scope of Work</div>
+          </div>
+          <span class="idx-arrow">→</span>
+        </a>
+        <a class="index-item" href="#sec-04">
+          <span class="idx-num">04</span>
+          <div class="idx-info">
+            <div class="idx-label">Billing</div>
+            <div class="idx-name">Payment &amp; Settlement Terms</div>
+          </div>
+          <span class="idx-arrow">→</span>
+        </a>
+        <a class="index-item" href="#sec-05">
+          <span class="idx-num">05</span>
+          <div class="idx-info">
+            <div class="idx-label">Agreement</div>
+            <div class="idx-name">Terms &amp; Conditions</div>
+          </div>
+          <span class="idx-arrow">→</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- §01 INTRODUCTION -->
+    <div id="sec-01" class="section" style="animation-delay:0.05s">
+      <div class="section-header">
+        <div class="sec-num">01</div>
+        <div class="sec-title-block">
+          <div class="sec-label">Overview</div>
+          <div class="sec-title">Introduction &amp; Value Proposition</div>
+        </div>
+      </div>
+      <p class="intro-text">
+        We are pleased to submit this <strong>Quotation cum Proposal</strong> for onsite manpower management at the Tata Steel TSUISL Golmuri Town Management Depot. Unix Engineering offers an end-to-end workforce deployment model — combining manpower supply, daily supervision, quality oversight, material handling coordination, and muster roll maintenance under a single unified engagement. This eliminates the need for the client to deploy additional supervisory personnel for routine site management functions.
+      </p>
+      <div class="value-strip">
+        <div class="vs-icon">💡</div>
+        <div class="vs-text">
+          <strong>Cost Efficiency for Client:</strong> Our bundled service model <strong>clubs manpower supply &amp; job completion monitoring with QC, material handling, and muster maintenance</strong> — removing the expense of deploying separate client-side personnel for these functions. One engagement covers all.
+        </div>
+      </div>
+      <div class="back-to-index">
+        <a class="bti-link" href="#sec-index"><span class="bti-arrow">↑</span> Go to Index</a>
+      </div>
+    </div>
+
+    <div id="sec-02" class="section" style="animation-delay:0.1s">
+      <div class="section-header">
+        <div class="sec-num">02</div>
+        <div class="sec-title-block">
+          <div class="sec-label">Pricing</div>
+          <div class="sec-title">Rate Schedule</div>
+        </div>
+      </div>
+
+      <!-- Card A -->
+      <div class="rate-card">
+        <div class="rc-head">
+          <div class="rc-head-title">Service A — Onsite Manpower Supply &amp; Deployment Management</div>
+          <div class="rc-badge">₹150 / Head / Day</div>
+        </div>
+        <div class="rc-body">
+          <div class="rc-desc">Covers supply, scheduling, and daily deployment of manpower with work allocation to each worker and monitoring of daily job completion. Includes coordination between site engineer requirements and labour availability.</div>
+          <div class="rc-formula">
+            <span class="rf-label">Formula</span>
+            <span class="rf-eq">Total = Headcount × ₹150 &nbsp;|&nbsp; e.g. 6 workers → 6 × ₹150 = <strong>₹900/day</strong></span>
+          </div>
+          <div class="rc-tags">
+            <span class="rc-tag">Work Allocation</span>
+            <span class="rc-tag">Job Completion Monitoring</span>
+            <span class="rc-tag">Daily Deployment</span>
+            <span class="rc-tag">Headcount Management</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card B -->
+      <div class="rate-card">
+        <div class="rc-head">
+          <div class="rc-head-title">Service B — QC Supervision, Material Handling &amp; Muster Roll Maintenance</div>
+          <div class="rc-badge">₹200 + ₹20/Head/Day</div>
+        </div>
+        <div class="rc-body">
+          <div class="rc-desc">Base charge covers supervision setup, documentation, and administrative overhead. Per-head charge covers quality checking of work output, material movement coordination, and daily muster / attendance record maintenance for each deployed worker.</div>
+          <div class="rc-formula">
+            <span class="rf-label">Formula</span>
+            <span class="rf-eq">Total = ₹200 + (Headcount × ₹20) &nbsp;|&nbsp; e.g. 6 workers → ₹200 + (6 × ₹20) = <strong>₹320/day</strong></span>
+          </div>
+          <div class="rc-tags">
+            <span class="rc-tag">QC Supervision</span>
+            <span class="rc-tag">Material Handling</span>
+            <span class="rc-tag">Muster Roll</span>
+            <span class="rc-tag">Attendance Records</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bundle-note">
+        <div class="bn-icon">📦</div>
+        <div class="bn-text"><strong>Bundled Advantage:</strong> Engaging both Service A and Service B together provides the client with a fully managed onsite workforce — from deployment to quality verification — without the overhead of maintaining a separate internal supervisory team. This directly reduces client-side manpower costs and administrative burden.</div>
+      </div>
+      <div class="back-to-index">
+        <a class="bti-link" href="#sec-index"><span class="bti-arrow">↑</span> Go to Index</a>
+      </div>
+    </div>
+
+    <!-- §03 SCOPE OF WORK -->
+    <div id="sec-03" class="section" style="animation-delay:0.15s">
+      <div class="section-header">
+        <div class="sec-num">03</div>
+        <div class="sec-title-block">
+          <div class="sec-label">Deliverables</div>
+          <div class="sec-title">Scope of Work</div>
+        </div>
+      </div>
+      <div class="scope-grid">
+        <div class="scope-item"><div class="si-dot"></div><div class="si-text">Onsite manpower deployment as per schedule</div></div>
+        <div class="scope-item"><div class="si-dot"></div><div class="si-text">Daily work allocation to each worker</div></div>
+        <div class="scope-item"><div class="si-dot"></div><div class="si-text">Job completion monitoring &amp; reporting</div></div>
+        <div class="scope-item"><div class="si-dot"></div><div class="si-text">Quality Check (QC) supervision</div></div>
+        <div class="scope-item"><div class="si-dot"></div><div class="si-text">Material handling &amp; movement coordination</div></div>
+        <div class="scope-item"><div class="si-dot"></div><div class="si-text">Daily muster / attendance maintenance</div></div>
+        <div class="scope-item"><div class="si-dot"></div><div class="si-text">Weekly labour payment processing</div></div>
+        <div class="scope-item"><div class="si-dot"></div><div class="si-text">Monthly settlement on 26-day working basis</div></div>
+        <div class="scope-item"><div class="si-dot"></div><div class="si-text">Replacement of absent / underperforming workers</div></div>
+        <div class="scope-item"><div class="si-dot"></div><div class="si-text">On-demand headcount scaling (with advance notice)</div></div>
+      </div>
+      <div class="back-to-index">
+        <a class="bti-link" href="#sec-index"><span class="bti-arrow">↑</span> Go to Index</a>
+      </div>
+    </div>
+
+    <!-- §04 PAYMENT TERMS -->
+    <div id="sec-04" class="section" style="animation-delay:0.2s">
+      <div class="section-header">
+        <div class="sec-num">04</div>
+        <div class="sec-title-block">
+          <div class="sec-label">Billing</div>
+          <div class="sec-title">Payment &amp; Settlement Terms</div>
+        </div>
+      </div>
+
+      <div class="pay-grid">
+        <div class="pay-card">
+          <div class="pc-icon">📅</div>
+          <div class="pc-label">Labour Payment</div>
+          <div class="pc-value">Weekly</div>
+        </div>
+        <div class="pay-card">
+          <div class="pc-icon">🗓️</div>
+          <div class="pc-label">Monthly Settlement</div>
+          <div class="pc-value">26 Working Days</div>
+        </div>
+        <div class="pay-card">
+          <div class="pc-icon">⚡</div>
+          <div class="pc-label">Payment TAT</div>
+          <div class="pc-value">3 Days Post Invoice</div>
+        </div>
+      </div>
+
+      <table class="pay-table">
+        <thead>
+          <tr>
+            <th>Parameter</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Labour Payment Cycle</td><td>Weekly (every 7 days)</td></tr>
+          <tr><td>Monthly Settlement</td><td>26 Working Days per month</td></tr>
+          <tr><td>Invoice Frequency</td><td>Weekly Invoice + Monthly Consolidated Bill</td></tr>
+          <tr><td>Measurement Basis</td><td>Actual head count deployed × working days</td></tr>
+          <tr><td>Applicable Taxes</td><td>GST as applicable / as mutually agreed</td></tr>
+          <tr><td>Mode of Payment</td><td>NEFT / RTGS / UPI — within 3 days of invoice</td></tr>
+        </tbody>
+      </table>
+
+      <div class="pay-note">
+        <strong>Note:</strong> The above rates are <strong>exclusive of GST</strong>. Any additional manpower required beyond the agreed daily count shall be billed at the same per-head rate plus applicable base charge. All workers will be supplied with valid ID proof, and muster records will be made available for client verification at any time. <strong>Rates are valid for 30 days from the date of this quotation.</strong>
+      </div>
+      <div class="back-to-index">
+        <a class="bti-link" href="#sec-index"><span class="bti-arrow">↑</span> Go to Index</a>
+      </div>
+    </div>
+
+    <!-- §05 T&C -->
+    <div id="sec-05" class="section" style="animation-delay:0.25s">
+      <div class="section-header">
+        <div class="sec-num">05</div>
+        <div class="sec-title-block">
+          <div class="sec-label">Agreement</div>
+          <div class="sec-title">Terms &amp; Conditions</div>
+        </div>
+      </div>
+      <div class="tc-list">
+        <div class="tc-item">
+          <div class="tc-num">01</div>
+          <div class="tc-text">All <strong>labour wages shall be borne by the client</strong>. The above rates cover management, supervision, QC, and coordination services only — not the wages of deployed workers.</div>
+        </div>
+        <div class="tc-item">
+          <div class="tc-num">02</div>
+          <div class="tc-text"><strong>Safety harness, all accessories, tools and tackles</strong> shall be provided by the client. Unix Engineering shall not be liable for the supply of any PPE or equipment.</div>
+        </div>
+        <div class="tc-item">
+          <div class="tc-num">03</div>
+          <div class="tc-text">This quotation <strong>does not include job measurement or preparation of BOQ</strong> (Bill of Quantities). Any such requirement shall be scoped and quoted separately.</div>
+        </div>
+        <div class="tc-item">
+          <div class="tc-num">04</div>
+          <div class="tc-text">Any <strong>increase in manpower strength</strong> shall be processed only upon a formal <strong>WhatsApp message request</strong> from the concerned Engineer or authorised personnel, with a minimum <strong>2 working days advance notice</strong>.</div>
+        </div>
+      </div>
+      <div class="warn-box">
+        <div class="wb-icon">⚠️</div>
+        <div class="wb-text"><strong>Mobilisation Notice Period:</strong> Requests received on a <strong>Monday</strong> will not be fulfilled before <strong>Wednesday</strong>. A minimum 48-hour mobilisation window is mandatory. Exceptions may be considered only in <strong>genuine emergency scenarios</strong> at the sole discretion of Unix Engineering.</div>
+      </div>
+      <div class="back-to-index">
+        <a class="bti-link" href="#sec-index"><span class="bti-arrow">↑</span> Go to Index</a>
+      </div>
+    </div>
+
+  </div><!-- /doc-body -->
+
+  <!-- FOOTER -->
+  <div class="doc-footer">
+    <div class="footer-left">
+      <div class="footer-validity">Valid till next revision &nbsp;|&nbsp; Rates subject to change with prior notice</div>
+      <div class="footer-ref">Ref: <span>UE/QP/2026/01</span> &nbsp;·&nbsp; Date: <span>3rd June 2026</span></div>
+    </div>
+    <div class="footer-right">
+      <div class="digital-note">✦ Signing is not required — you are viewing this on our <em>associate website</em></div>
+      <div class="sig-box">
+        <div class="sig-name">Authorised Signatory</div>
+        <div class="sig-title">Unix Engineering</div>
+      </div>
+    </div>
+  </div>
+  <div class="doc-bottom-bar"></div>
+
+</div><!-- /doc -->
+
+<script>
+function unlock(){
+  const v = document.getElementById('pw-input').value.trim();
+  if(v === 'unixengg'){
+    const ls = document.getElementById('lock-screen');
+    ls.classList.add('hide');
+    setTimeout(()=>{ ls.style.display='none'; },650);
+    const doc = document.getElementById('doc');
+    doc.style.display = 'block';
+    document.body.style.background = '#1a1f2b';
+    setTimeout(()=>{ doc.classList.add('visible'); },50);
+  } else {
+    const err = document.getElementById('lock-error');
+    err.textContent = '✕  Incorrect password. Please try again.';
+    const inp = document.getElementById('pw-input');
+    inp.style.borderColor = '#e74c3c';
+    inp.value = '';
+    setTimeout(()=>{ err.textContent=''; inp.style.borderColor=''; }, 3200);
+  }
+}
+</script>
+</body>
+</html>
